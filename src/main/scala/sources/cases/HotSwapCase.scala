@@ -15,7 +15,7 @@ object HotSwapCase extends App {
   println(ref.flatMap { num =>
     Hotswap.create[IO, Int].allocated.flatMap {
       case (hw, fin) => hw.swap(Resource.eval(num.getAndUpdate(_ + 1))).onCancel(fin)
-    }
+    } *> num.get.debug("num is ")
   }.flatMap { b =>
     IO.println(s"b=======$b").unsafeRunSync()
     Hotswap.create[IO, Int].use {
