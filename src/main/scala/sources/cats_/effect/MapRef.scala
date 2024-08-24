@@ -164,11 +164,11 @@ object MapRef extends MapRefCompanionPlatform {
     override def apply(k: K): Ref[F, Option[V]] = new HandleRef(k)
   }
 
-  def fromConcurrentHashMap[F[_]: Sync, K, V](map: ConcurrentHashMap[K, V]): MapRef[F, K, Option[V]] =
+  def fromConcurrentHashMap[F[_] : Sync, K, V](map: ConcurrentHashMap[K, V]): MapRef[F, K, Option[V]] =
     new ConcurrentHashMapImpl[F, K, V](map, Sync[F])
 
-  def fromScalaConcurrentMap[F[_]: Sync, K, V](
-                                                map: scala.collection.concurrent.Map[K, V]): MapRef[F, K, Option[V]] =
+  def fromScalaConcurrentMap[F[_] : Sync, K, V](
+                                                 map: scala.collection.concurrent.Map[K, V]): MapRef[F, K, Option[V]] =
     new ScalaConcurrentMapImpl[F, K, V](map)
 
   private class ScalaConcurrentMapImpl[F[_], K, V](map: scala.collection.concurrent.Map[K, V])(
@@ -176,6 +176,7 @@ object MapRef extends MapRefCompanionPlatform {
     extends MapRef[F, K, Option[V]] {
 
     val fnone0: F[None.type] = sync.pure(None)
+
     def fnone[A]: F[Option[A]] = fnone0.widen[Option[A]]
 
     class HandleRef(k: K) extends Ref[F, Option[V]] {
@@ -228,6 +229,7 @@ object MapRef extends MapRefCompanionPlatform {
           case None => loop
           case Some(b) => sync.pure(b)
         }
+
         loop
       }
 
@@ -236,8 +238,12 @@ object MapRef extends MapRefCompanionPlatform {
 
       def set(a: Option[V]): F[Unit] =
         a match {
-          case None => sync.delay { map.remove(k); () }
-          case Some(v) => sync.delay { map.put(k, v); () }
+          case None => sync.delay {
+            map.remove(k); ()
+          }
+          case Some(v) => sync.delay {
+            map.put(k, v); ()
+          }
         }
 
       def tryModify[B](
@@ -277,6 +283,7 @@ object MapRef extends MapRefCompanionPlatform {
           case true => sync.unit
           case false => loop
         }
+
         loop
       }
     }
@@ -290,7 +297,7 @@ object MapRef extends MapRefCompanionPlatform {
 }
 
 
-private trait MapRefCompanionPlatform {
+trait MapRefCompanionPlatform {
 
   def inScalaConcurrentTrieMap[G[_] : Sync, F[_] : Sync, K, V]: G[MapRef[F, K, Option[V]]] =
     Sync[G]

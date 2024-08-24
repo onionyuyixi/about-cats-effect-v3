@@ -109,6 +109,7 @@ object CatsWithScalaParallel extends App {
   val errStr1: ErrorOrList[Int] = Left(List("error 1"))
   val errStr2: ErrorOrList[Int] = Left(List("error 2"))
   val tupled1: ErrorOrList[(Int, Int)] = (errStr1, errStr2).parTupled
+  println(tupled1)
 
 
 

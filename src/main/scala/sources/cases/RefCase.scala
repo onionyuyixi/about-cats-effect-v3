@@ -5,7 +5,7 @@ object RefCase extends App {
 }
 
 
-import cats.effect.kernel.Ref
+import cats.effect.kernel.{Poll, Ref}
 import cats.effect.unsafe.implicits.global
 import cats.effect.{IO, IOApp, Sync}
 import cats.syntax.all._
@@ -43,7 +43,7 @@ object RefExample extends IOApp.Simple {
 
 object RefExample1 extends IOApp.Simple {
 
-  val program = IO.unit >> Ref[IO].of(10).flatMap { ref =>
+  val program: IO[Unit] = IO.unit >> Ref[IO].of(10).flatMap { ref =>
     val w1 = new Worker[IO](1, ref)
     val w2 = new Worker[IO](2, ref)
     val w3 = new Worker[IO](3, ref)
@@ -56,3 +56,17 @@ object RefExample1 extends IOApp.Simple {
 
   val run: IO[Unit] = program.void
 }
+
+
+object RefExample2 extends App {
+
+  val program: IO[Int] = IO.unit >> Ref[IO].of(10).flatMap { ref =>
+    ref.flatModifyFull { (poll, a) => {
+      (a + 1, poll(IO(100)))
+    }
+    }.debug("ref is")
+  }
+
+  program.unsafeRunSync()
+}
+
